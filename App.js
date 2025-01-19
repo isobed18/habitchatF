@@ -16,7 +16,7 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
-      const response = await axiosInstance.post('/login/', {
+      const response = await axiosInstance.post('api/login/', {
         username,
         password,
       });
@@ -32,7 +32,7 @@ export default function App() {
   const getServerTime = async () => {
     try {
       console.log('Sunucu zamanını almak için istek gönderiliyor...'); // Hata ayıklama bilgisi
-      const response = await axiosInstance.get('/get_server_time');
+      const response = await axiosInstance.get('api/get_server_time');
       Alert.alert('Sunucu Zamanı', response.data.message);
     } catch (error) {
       console.error('Error fetching server time:', error.message);
