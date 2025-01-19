@@ -29,6 +29,7 @@ const openEditModal = (habit) => {
     name: '',
     habit_type: 'count',
     target_count: '',
+    target_time: '', // Yeni alan
     frequency: 'daily',
   });
 
@@ -45,14 +46,14 @@ const openEditModal = (habit) => {
 
   // Yeni Alışkanlık Ekle
   
-const handleAddHabit = async () => {
+  const handleAddHabit = async () => {
     try {
       // Yeni alışkanlık nesnesini oluştur
       const habitData = {
         name: newHabit.name,
         habit_type: habitType, // habitType'ı buraya ekleyin
         target_count: habitType === 'count' ? newHabit.target_count : null, // Eğer count ise hedef sayıyı ekle
-        total_time: habitType === 'time' ? totalTime : null, // Eğer time ise toplam süreyi ekle
+        target_time: habitType === 'time' ? newHabit.target_time : null, // Eğer time ise hedef süreyi ekle
         frequency: frequency, // frequency'yi buraya ekleyin
       };
   
@@ -66,6 +67,16 @@ const handleAddHabit = async () => {
     }
   };
   
+  const formatDuration = (duration) => {
+    if (duration === null || duration === undefined) return 'N/A';
+  
+    const totalSeconds = Math.floor(duration); // Saniye cinsine çevir
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+  
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
   // Sunucu Zamanını Al
   const getServerTime = async () => {
@@ -135,43 +146,47 @@ const handleAddHabit = async () => {
       <Text style={styles.title}>Alışkanlıklarım</Text>
 
       <FlatList
-        data={habits}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-            <View style={styles.habitCard}>
-              <Text style={styles.habitName}>{item.name}</Text>
-              <Text>Tür: {item.habit_type}</Text>
-              <Text>Hedef: {item.target_count || 'N/A'}</Text>
-              <Text>Sıklık: {item.frequency}</Text>
-              <Text>Seri: {item.streak}</Text>
-              <Text>Sayım: {item.count}</Text>
-              <View style={styles.buttonRow}>
-                <Pressable
-                  style={[styles.button, styles.incrementButton]}
-                  onPress={() => handleIncrement(item.id)}
-                >
-                  <Text style={styles.buttonText}>+</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.button, styles.decrementButton]}
-                  onPress={() => handleDecrement(item.id)}
-                >
-                  <Text style={styles.buttonText}>-</Text>
-                </Pressable>
+  data={habits}
+  keyExtractor={(item) => item.id.toString()}
+  renderItem={({ item }) => (
+    <View style={styles.habitCard}>
+      <Text style={styles.habitName}>{item.name}</Text>
+      <Text>Tür: {item.habit_type}</Text>
+      {item.habit_type === 'count' ? (
+        <Text>Hedef: {item.target_count || 'N/A'}</Text>
+      ) : (
+        <Text>Hedef Süre: {formatDuration(item.target_time) || 'N/A'}</Text>
+      )}
+      <Text>Sıklık: {item.frequency}</Text>
+      <Text>Seri: {item.streak}</Text>
+      <Text>Sayım: {item.count}</Text>
+      <View style={styles.buttonRow}>
+        <Pressable
+          style={[styles.button, styles.incrementButton]}
+          onPress={() => handleIncrement(item.id)}
+        >
+          <Text style={styles.buttonText}>+</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.button, styles.decrementButton]}
+          onPress={() => handleDecrement(item.id)}
+        >
+          <Text style={styles.buttonText}>-</Text>
+        </Pressable>
 
-                <Pressable style={[styles.button, styles.editButton]}  onPress={() => openEditModal(item)} >
-                <Text style={styles.buttonText}>Düzenle</Text>
-                </Pressable>
-                <Pressable
-  style={[styles.button, styles.deleteButton]}
-  onPress={() => handleDeleteHabit(item.id)}
->
-  <Text style={styles.buttonText}>Sil</Text>
-</Pressable>
+        <Pressable style={[styles.button, styles.editButton]} onPress={() => openEditModal(item)}>
+          <Text style={styles.buttonText}>Düzenle</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.button, styles.deleteButton]}
+          onPress={() => handleDeleteHabit(item.id)}
+        >
+          <Text style={styles.buttonText}>Sil</Text>
+        </Pressable>
+      </View>
     </View>
-    </View>
-    )}  
-      />
+  )}
+/>
 
       {/* Sunucu Zamanı */}
       <Pressable style={styles.button} onPress={getServerTime}>
@@ -275,10 +290,12 @@ const handleAddHabit = async () => {
         />
       ) : (
         <TextInput
-          placeholder="Toplam Süre (örn: 01:30:00)"
+          placeholder="Hedef Süre (örn: 01:30:00)"
           style={styles.textInput}
-          value={totalTime}
-          onChangeText={(value) => setTotalTime(value)}
+          value={newHabit.target_time} // target_time için state ekleyin
+          onChangeText={(value) =>
+            setNewHabit((prev) => ({ ...prev, target_time: value })) // target_time'ı güncelleyin
+          }
         />
       )}
 
