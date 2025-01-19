@@ -44,9 +44,19 @@ const openEditModal = (habit) => {
   };
 
   // Yeni Alışkanlık Ekle
-  const handleAddHabit = async () => {
+  
+const handleAddHabit = async () => {
     try {
-      const response = await axiosInstance.post('api/add_habit', newHabit);
+      // Yeni alışkanlık nesnesini oluştur
+      const habitData = {
+        name: newHabit.name,
+        habit_type: habitType, // habitType'ı buraya ekleyin
+        target_count: habitType === 'count' ? newHabit.target_count : null, // Eğer count ise hedef sayıyı ekle
+        total_time: habitType === 'time' ? totalTime : null, // Eğer time ise toplam süreyi ekle
+        frequency: frequency, // frequency'yi buraya ekleyin
+      };
+  
+      const response = await axiosInstance.post('api/add_habit', habitData);
       Alert.alert('Başarılı!', response.data.message);
       setModalVisible(false); // Modal'ı kapat
       fetchHabits(); // Alışkanlıkları yeniden yükle
@@ -55,6 +65,7 @@ const openEditModal = (habit) => {
       Alert.alert('Hata!', 'Alışkanlık eklenemedi.');
     }
   };
+  
 
   // Sunucu Zamanını Al
   const getServerTime = async () => {
