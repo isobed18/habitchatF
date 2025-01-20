@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import axiosInstance from './services/axiosInstance';
+import TimePickerModal from './HomeModals/TimePickerModal'; // Dosya yolunuza göre ayarlayın
 
 export default function Home() {
     const [habits, setHabits] = useState([]); // Alışkanlıklar listesi
@@ -19,7 +20,7 @@ export default function Home() {
     const [totalTime, setTotalTime] = useState(''); // Toplam süre
     const [frequency, setFrequency] = useState('daily'); // Sıklık
     const [selectedHabit, setSelectedHabit] = useState(null);
-
+    const [timePickerVisible, setTimePickerVisible] = useState(false);
 const openEditModal = (habit) => {
   setSelectedHabit(habit);
   setEditModalVisible(true);
@@ -33,6 +34,14 @@ const openEditModal = (habit) => {
     frequency: 'daily',
   });
 
+  const formatTargetTimeForDisplay = (totalSeconds) => {
+    if (totalSeconds === null || totalSeconds === undefined) return 'N/A';
+  
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+  
+    return `${hours} saat ${minutes} dakika`;
+  };
   // Alışkanlıkları Backend'den çek
   const fetchHabits = async () => {
     try {
@@ -75,6 +84,9 @@ const openEditModal = (habit) => {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
   
+
+    
+
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
@@ -127,6 +139,7 @@ const openEditModal = (habit) => {
   };
   
   const handleUpdateHabit = async () => {
+    console.log(selectedHabit); // Burada gönderilen verileri kontrol edin
     try {
       const response = await axiosInstance.put(`api/update_habit/${selectedHabit.id}/`, selectedHabit);
       Alert.alert('Başarılı!', response.data.message);
@@ -222,15 +235,42 @@ const openEditModal = (habit) => {
           setSelectedHabit((prev) => ({ ...prev, name: value }))
         }
       />
-      <TextInput
-        placeholder="Hedef Sayısı"
-        style={styles.textInput}
-        keyboardType="numeric"
-        value={String(selectedHabit?.target_count)}
-        onChangeText={(value) =>
-          setSelectedHabit((prev) => ({ ...prev, target_count: value }))
-        }
+
+      {/* Hedef Süre veya Hedef Sayısı Seçimi */}
+      {selectedHabit?.habit_type === 'count' ? (
+        <>
+          <Text style={styles.label}>Hedef Sayısı:</Text>
+          <TextInput
+            placeholder="Hedef Sayısı"
+            style={styles.textInput}
+            keyboardType="numeric"
+            value={String(selectedHabit?.target_count)}
+            onChangeText={(value) =>
+              setSelectedHabit((prev) => ({ ...prev, target_count: value }))
+            }
+          />
+        </>
+      ) : (
+        <>
+          <Text style={styles.label}>Hedef Süre:</Text>
+          <Pressable onPress={() => setTimePickerVisible(true)}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputText}>
+                {formatTargetTimeForDisplay(selectedHabit?.target_time)}
+              </Text>
+            </View>
+          </Pressable>
+        </>
+      )}
+
+      <TimePickerModal
+        visible={timePickerVisible}
+        onClose={() => setTimePickerVisible(false)}
+        onSelect={(totalSeconds) => {
+          setSelectedHabit((prev) => ({ ...prev, target_time: totalSeconds }));
+        }}
       />
+
       <Pressable
         style={[styles.button, styles.saveButton]}
         onPress={handleUpdateHabit}
@@ -251,77 +291,85 @@ const openEditModal = (habit) => {
 
 {/* Yeni Alışkanlık Ekle Modal */}
 <Modal
-  animationType="slide"
-  transparent={true}
-  visible={modalVisible}
-  onRequestClose={() => setModalVisible(false)}
->
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Yeni Alışkanlık Ekle</Text>
-
-      <TextInput
-        placeholder="Alışkanlık Adı"
-        style={styles.textInput}
-        value={newHabit.name}
-        onChangeText={(value) =>
-          setNewHabit((prev) => ({ ...prev, name: value }))
-        }
-      />
-      
-      {/* Alışkanlık Tipi Seçimi */}
-      <Text>Alışkanlık Tipi:</Text>
-      <Pressable style={styles.selectionBox} onPress={() => setHabitType(habitType === 'count' ? 'time' : 'count')}>
-        <Text style={styles.selectionText}>
-          {habitType === 'count' ? 'Sayım Kontrollü' : 'Zaman Kontrollü'}
-        </Text>
-      </Pressable>
-
-      {/* Hedef Sayısı veya Süre Girişi */}
-      {habitType === 'count' ? (
-        <TextInput
-          placeholder="Hedef Sayısı"
-          style={styles.textInput}
-          keyboardType="numeric"
-          value={newHabit.target_count}
-          onChangeText={(value) =>
-            setNewHabit((prev) => ({ ...prev, target_count: value }))
-          }
-        />
-      ) : (
-        <TextInput
-          placeholder="Hedef Süre (örn: 01:30:00)"
-          style={styles.textInput}
-          value={newHabit.target_time} // target_time için state ekleyin
-          onChangeText={(value) =>
-            setNewHabit((prev) => ({ ...prev, target_time: value })) // target_time'ı güncelleyin
-          }
-        />
-      )}
-
-      {/* Sıklık Seçimi */}
-      <Text>Sıklık:</Text>
-      <Pressable style={styles.selectionBox} onPress={() => setFrequency(frequency === 'daily' ? 'weekly' : frequency === 'weekly' ? 'monthly' : 'daily')}>
-        <Text style={styles.selectionText}>
-          {frequency.charAt(0).toUpperCase() + frequency.slice(1)}
-        </Text>
-      </Pressable>
-
-      <Pressable
-        style={[styles.button, styles.saveButton]}
-        onPress={handleAddHabit}
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
       >
-        <Text style={styles.buttonText}>Ekle</Text>
-      </Pressable>
-      <Pressable
-        style={[styles.button, styles.cancelButton]}
-        onPress={() => setModalVisible(false)}
-      >
-        <Text style={styles.buttonText}>İptal</Text>
-      </Pressable>
-    </View>
-  </View>
-</Modal>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Yeni Alışkanlık Ekle</Text>
+
+            <TextInput
+              placeholder="Alışkanlık Adı"
+              style={styles.textInput}
+              value={newHabit.name}
+              onChangeText={(value) =>
+                setNewHabit((prev) => ({ ...prev, name: value }))
+              }
+            />
+
+            {/* Alışkanlık Tipi Seçimi */}
+            <Text>Alışkanlık Tipi:</Text>
+            <Pressable style={styles.selectionBox} onPress={() => setHabitType(habitType === 'count' ? 'time' : 'count')}>
+              <Text style={styles.selectionText}>
+                {habitType === 'count' ? 'Sayım Kontrollü' : 'Zaman Kontrollü'}
+              </Text>
+            </Pressable>
+
+            {/* Hedef Sayısı veya Süre Girişi */}
+            {habitType === 'count' ? (
+              <TextInput
+                placeholder="Hedef Sayısı"
+                style={styles.textInput}
+                keyboardType="numeric"
+                value={newHabit.target_count}
+                onChangeText={(value) =>
+                  setNewHabit((prev) => ({ ...prev, target_count: value }))
+                }
+              />
+            ) : (
+              <Pressable onPress={() => setTimePickerVisible(true)}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputText}>
+                    {newHabit.target_time ? formatTargetTimeForDisplay(newHabit.target_time) : 'Hedef Süre Seçin'}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+
+            {/* Zaman Seçici Modal */}
+            <TimePickerModal
+              visible={timePickerVisible}
+              onClose={() => setTimePickerVisible(false)}
+              onSelect={(totalSeconds) => {
+                setNewHabit((prev) => ({ ...prev, target_time: totalSeconds }));
+              }}
+            />
+
+            {/* Sıklık Seçimi */}
+            <Text>Sıklık:</Text>
+            <Pressable style={styles.selectionBox} onPress={() => setFrequency(frequency === 'daily' ? 'weekly' : frequency === 'weekly' ? 'monthly' : 'daily')}>
+              <Text style={styles.selectionText}>
+                {frequency.charAt(0).toUpperCase() + frequency.slice(1)}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.saveButton]}
+              onPress={handleAddHabit}
+            >
+              <Text style={styles.buttonText}>Ekle</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>İptal</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -433,5 +481,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  inputContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    backgroundColor: '#f0f0f0',
+  },
+  inputText: {
+    fontSize: 16,
+    color: '#333',
+  },
 });
