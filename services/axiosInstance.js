@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken } from '../utils/auth';
 
 const axiosInstance = axios.create({
-    baseURL: 'http://192.168.1.36:8000', // Django sunucu URL'nizi buraya koyun
+    baseURL: 'http://192.168.1.36:8000/', // Django sunucu URL'nizi buraya koyun
 });
 
 axiosInstance.interceptors.request.use(

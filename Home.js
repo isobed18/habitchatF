@@ -19,7 +19,7 @@ export default function Home() {
     const [habitType, setHabitType] = useState('count'); // Alışkanlık tipi
     const [totalTime, setTotalTime] = useState(''); // Toplam süre
     const [frequency, setFrequency] = useState('daily'); // Sıklık
-    const [selectedHabit, setSelectedHabit] = useState(null);
+    const [selectedHabit, setSelectedHabit] = useState({ count: 0 }); // Başlangıçta count değeri 0 olarak ayarlandı
     const [timePickerVisible, setTimePickerVisible] = useState(false);
 const openEditModal = (habit) => {
   setSelectedHabit(habit);
@@ -105,27 +105,9 @@ const openEditModal = (habit) => {
     fetchHabits();
   }, []);
 
-  const handleIncrement = async (habitId) => {
-    try {
-      const response = await axiosInstance.post(`api/increment_habit_count/${habitId}/`);
-      Alert.alert('Başarılı!', response.data.message);
-      fetchHabits(); // Alışkanlıkları güncelle
-    } catch (error) {
-      console.error('Error incrementing habit:', error.message);
-      Alert.alert('Hata!', 'Sayım artırılamadı.');
-    }
-  };
   
-  const handleDecrement = async (habitId) => {
-    try {
-      const response = await axiosInstance.post(`api/decrement_habit_count/${habitId}/`);
-      Alert.alert('Başarılı!', response.data.message);
-      fetchHabits();
-    } catch (error) {
-      console.error('Error decrementing habit:', error.message);
-      Alert.alert('Hata!', 'Sayım azaltılamadı.');
-    }
-  };
+  
+  
   
   const handleDeleteHabit = async (habitId) => {
     try {
@@ -139,12 +121,24 @@ const openEditModal = (habit) => {
   };
   
   const handleUpdateHabit = async () => {
-    console.log(selectedHabit); // Burada gönderilen verileri kontrol edin
     try {
-      const response = await axiosInstance.put(`api/update_habit/${selectedHabit.id}/`, selectedHabit);
+      const payload = {
+        id: selectedHabit.id,
+        name: selectedHabit.name,
+        habit_type: selectedHabit.habit_type,
+        count: selectedHabit.count, // Artırılmış veya manuel girilmiş değer
+        target_count: selectedHabit.target_count,
+        target_time: selectedHabit.target_time,
+      };
+  
+      const response = await axiosInstance.put(
+        `api/update_habit/${selectedHabit.id}/`,
+        payload
+      );
+  
       Alert.alert('Başarılı!', response.data.message);
       setEditModalVisible(false);
-      fetchHabits();
+      fetchHabits(); // Alışkanlıkları güncelle
     } catch (error) {
       console.error('Error updating habit:', error.message);
       Alert.alert('Hata!', 'Güncelleme başarısız oldu.');
@@ -173,18 +167,42 @@ const openEditModal = (habit) => {
       <Text>Sıklık: {item.frequency}</Text>
       <Text>Seri: {item.streak}</Text>
       <Text>Sayım: {item.count}</Text>
+      <Text>Tamamlanan: {item.completed_count}</Text>
       <View style={styles.buttonRow}>
-        <Pressable
+      <Pressable
           style={[styles.button, styles.incrementButton]}
-          onPress={() => handleIncrement(item.id)}
+          onPress={async () => {
+            // İlk olarak `selectedHabit`'i seç ve güncelle
+            const updatedHabit = {
+              ...item, // Şu anki item verilerini kullan
+              count: (item.count || 0) + 1, // `count` değerini artır
+            };
+
+            // Güncellenmiş alışkanlık ile API çağrısını yap
+            try {
+              const payload = {
+                name:updatedHabit.name,
+                count: updatedHabit.count,
+                target_count: updatedHabit.target_count // Yalnızca değişen değeri gönder
+              };
+
+              const response = await axiosInstance.put(
+                `api/update_habit/${updatedHabit.id}/`,
+                payload
+              );
+
+              Alert.alert('Başarılı!', response.data.message);
+
+              // Yerel state'i güncelle
+              setSelectedHabit(updatedHabit);
+              fetchHabits(); // Listeyi yeniden yükle
+            } catch (error) {
+              console.error('Error updating habit:', error.message);
+              Alert.alert('Hata!', 'Güncelleme başarısız oldu.');
+            }
+          }}
         >
-          <Text style={styles.buttonText}>+</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.button, styles.decrementButton]}
-          onPress={() => handleDecrement(item.id)}
-        >
-          <Text style={styles.buttonText}>-</Text>
+          <Text style={styles.buttonText}>+1</Text>
         </Pressable>
 
         <Pressable style={[styles.button, styles.editButton]} onPress={() => openEditModal(item)}>
@@ -246,7 +264,24 @@ const openEditModal = (habit) => {
             keyboardType="numeric"
             value={String(selectedHabit?.target_count)}
             onChangeText={(value) =>
-              setSelectedHabit((prev) => ({ ...prev, target_count: value }))
+              setSelectedHabit((prev) => ({
+                ...prev,
+                target_count: parseInt(value, 10) || 0,
+              }))
+            }
+          />
+          {/* Mevcut Sayıyı Düzenle */}
+          <Text style={styles.label}>Mevcut Sayı:</Text>
+          <TextInput
+            placeholder="Mevcut Sayı"
+            style={styles.textInput}
+            keyboardType="numeric"
+            value={String(selectedHabit?.count)}
+            onChangeText={(value) =>
+              setSelectedHabit((prev) => ({
+                ...prev,
+                count: parseInt(value, 10) || 0,
+              }))
             }
           />
         </>
@@ -271,9 +306,10 @@ const openEditModal = (habit) => {
         }}
       />
 
+      {/* Güncelle Butonu */}
       <Pressable
         style={[styles.button, styles.saveButton]}
-        onPress={handleUpdateHabit}
+        onPress={() => handleUpdateHabit()}
       >
         <Text style={styles.buttonText}>Güncelle</Text>
       </Pressable>
