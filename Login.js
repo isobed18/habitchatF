@@ -23,7 +23,7 @@ export default function Login({ navigation }) {
       const { token } = response.data;
       await saveToken(token); // Token'ı kaydet
       Alert.alert('Başarılı!', 'Giriş başarılı!');
-      navigation.navigate('Home'); // Home sayfasına yönlendir
+      navigation.navigate('Profile'); // Home sayfasına yönlendir
     } catch (error) {
       console.error('Login failed:', error.response?.data || error.message);
       Alert.alert('Hata!', 'Kullanıcı adı veya şifre yanlış.');
