@@ -16,7 +16,7 @@ export default function Login({ navigation }) {
 
   const handleLogin = async () => {
     try {
-      const response = await axiosInstance.post('users/api/login/', {
+      const response = await axiosInstance.post('users/login/', {
         username,
         password,
       });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Button, TextInput, StyleSheet,Modal, FlatList } from 'react-native';
 import axiosInstance from './services/axiosInstance';
 
 const ProfilePage = ({ navigation }) => {
@@ -7,6 +7,9 @@ const ProfilePage = ({ navigation }) => {
     const [friends, setFriends] = useState([]);
     const [username, setUsername] = useState('');
     const [showPopup, setShowPopup] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedFriendHabits, setSelectedFriendHabits] = useState([]);
+
 
     useEffect(() => {
         fetchFriendRequests();
@@ -14,35 +17,53 @@ const ProfilePage = ({ navigation }) => {
     }, []);
 
     const fetchFriendRequests = async () => {
-        const response = await axiosInstance.get('/api/friends/requests_list/');
-        console.log(response.data);
+        const response = await axiosInstance.get('friends/requests_list/');
+        
         setFriendRequests(response.data);
     };
 
     const fetchFriends = async () => {
-        const response = await axiosInstance.get('/api/friends/list/');
+        const response = await axiosInstance.get('friends/list/');
         setFriends(response.data);
+    };
+    const fetchFriendsHabits = async (friendUsername) => {
+        try {
+            const response = await axiosInstance.get('friends/get_habits_with_streaks/', {
+                params: {
+                    friend_user: friendUsername
+                }
+            });
+            const habits = response.data.habits
+            setSelectedFriendHabits(habits); // Store habits data
+            setModalVisible(true); // Show modal
+        } catch (error) {
+            console.error('Error fetching habits:', error);
+        }
     };
 
     const sendFriendRequest = async () => {
         try {
-            await axiosInstance.post('/api/friends/send_request/', { friend_username: username });
+            await axiosInstance.post('friends/send_request/', { friend_username: username });
             setShowPopup(false);
             fetchFriendRequests();
             fetchFriends(); // Yenile
         } catch (error) {
-            console.error('Error sending friend request:', error);
+            // Hata mesajını backend'den al
+        const errorMessage = error.response?.data?.error || 'Bir hata oluştu.'; // Varsayılan hata mesajı
+        console.error('Error sending friend request: ', errorMessage);
+        // Hata mesajını kullanıcıya göster
+        alert(errorMessage); // Örneğin bir alert ile gösterim
         }
     };
 
     const acceptRequest = async (id) => {
-        await axiosInstance.post(`/api/friends/accept/${id}/`);
+        await axiosInstance.post(`friends/accept/${id}/`);
         fetchFriendRequests(); // Yenile
         fetchFriends(); // Arkadaşlar listesini güncelle
     };
 
     const declineRequest = async (id) => {
-        await axiosInstance.post(`/api/friends/decline/${id}/`);
+        await axiosInstance.post(`friends/decline/${id}/`);
         fetchFriendRequests(); // Yenile
         fetchFriends();
     };
@@ -64,10 +85,33 @@ const ProfilePage = ({ navigation }) => {
    )}
             <Text style={styles.sectionTitle}>Arkadaşlar</Text>
             {friends.map(friend => (
-                <Text key={friend.friend__username} style={styles.friendItem}>
+                <Text 
+                    key={friend.friend__username} 
+                    style={styles.friendItem}
+                    onPress={() => fetchFriendsHabits(friend.friend__username)}
+                >
                     {friend.friend__username}
                 </Text>
             ))}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalView}>
+                    <Text style={styles.modalTitle}>Friend's Habits</Text>
+                    <FlatList
+                        data={selectedFriendHabits}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <Text style={styles.habitItem}>{item.name} - Streak: {item.streak}</Text>
+                        )}
+                    />
+                    <Button title="Close" onPress={() => setModalVisible(false)} />
+                </View>
+            </Modal>
+
             <Button title="Arkadaşlık İsteği Gönder" onPress={() => setShowPopup(true)} />
             {showPopup && (
                 <View style={styles.popup}>
@@ -134,6 +178,28 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 8,
         paddingHorizontal: 8,
+    },
+
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 15,
+    },
+    habitItem: {
+        fontSize: 16,
+        marginBottom: 10,
     },
 });
 

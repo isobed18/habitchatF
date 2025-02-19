@@ -45,7 +45,7 @@ const openEditModal = (habit) => {
   // Alışkanlıkları Backend'den çek
   const fetchHabits = async () => {
     try {
-      const response = await axiosInstance.get('api/get_habits');
+      const response = await axiosInstance.get('habits/get/');
       setHabits(response.data.habits);
     } catch (error) {
       console.error('Error fetching habits:', error.message);
@@ -66,7 +66,7 @@ const openEditModal = (habit) => {
         frequency: frequency, // frequency'yi buraya ekleyin
       };
   
-      const response = await axiosInstance.post('api/add_habit', habitData);
+      const response = await axiosInstance.post('habits/add/', habitData);
       Alert.alert('Başarılı!', response.data.message);
       setModalVisible(false); // Modal'ı kapat
       fetchHabits(); // Alışkanlıkları yeniden yükle
@@ -93,7 +93,7 @@ const openEditModal = (habit) => {
   // Sunucu Zamanını Al
   const getServerTime = async () => {
     try {
-      const response = await axiosInstance.get('users/api/get_server_time');
+      const response = await axiosInstance.get('users/get_server_time');
       Alert.alert('Sunucu Zamanı', response.data.message);
     } catch (error) {
       console.error('Error fetching server time:', error.message);
@@ -111,7 +111,7 @@ const openEditModal = (habit) => {
   
   const handleDeleteHabit = async (habitId) => {
     try {
-      const response = await axiosInstance.delete(`api/delete_habit/${habitId}/`);
+      const response = await axiosInstance.delete(`habits/delete/${habitId}/`);
       Alert.alert('Başarılı!', response.data.message);
       fetchHabits();
     } catch (error) {
@@ -132,7 +132,7 @@ const openEditModal = (habit) => {
       };
   
       const response = await axiosInstance.put(
-        `api/update_habit/${selectedHabit.id}/`,
+        `habits/update/${selectedHabit.id}/`,
         payload
       );
   
@@ -187,7 +187,7 @@ const openEditModal = (habit) => {
               };
 
               const response = await axiosInstance.put(
-                `api/update_habit/${updatedHabit.id}/`,
+                `habits/update/${updatedHabit.id}/`,
                 payload
               );
 

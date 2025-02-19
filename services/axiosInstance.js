@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken } from '../utils/auth';
 
 const axiosInstance = axios.create({
-    baseURL: 'http://192.168.1.36:8000/', // Django sunucu URL'nizi buraya koyun
+    baseURL: 'http://192.168.1.36:8000/api/', // sunucu url, wifide calisirken Wireless LAN adapter Wi-Fi: ipv4 kismi olacak. degisirse degistirmeyi unutma
 });
 
 axiosInstance.interceptors.request.use(
