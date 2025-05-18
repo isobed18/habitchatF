@@ -31,6 +31,19 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+
+mybaseurl.txt
+#kendi api url'imin bulundugu kısım
