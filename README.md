@@ -1,6 +1,8 @@
-# Habit Tracker - Social Habit Tracking App
+# Habit Tracker - React Native Mobile App
 
-A social habit tracking application built with React Native (Expo) and Django backend. Users can track their habits, share progress with friends, and earn rewards through achievements.
+A social habit tracking application built with React Native (Expo) and Django backend.
+
+This is the frontend part of the Habit Tracker project.
 
 ## Features
 - Social habit tracking
@@ -14,25 +16,18 @@ A social habit tracking application built with React Native (Expo) and Django ba
 - npm or yarn
 - Expo CLI
 - Expo Go app on your mobile device
-- Python 3.8 or higher (for backend)
-- Redis (for backend)
 
-## Backend Setup
-1. Clone the backend repository:
-```bash
-git clone [BACKEND_REPO_URL]
-cd [BACKEND_REPO_NAME]
-```
+## Setup
 
-2. Follow the backend setup instructions in its README.md file to set up the Django server.
+**Important:** This frontend requires the backend server to be running. Please set up the backend first by following the instructions in the backend repository's README:
 
-3. Make sure the backend server is running on your local network.
+[Habit Tracker Backend Repository](https://github.com/isobed18/habitchatB)
 
-## Frontend Installation
+Once the backend is set up and running, proceed with the frontend setup:
 
 1. Clone this repository:
 ```bash
-git clone [FRONTEND_REPO_URL]
+git clone https://github.com/isobed18/habitchatF.git
 cd habit_f
 ```
 
