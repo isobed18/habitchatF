@@ -1,5 +1,5 @@
 # Habit Tracker - React Native Mobile App
-
+[Habit Tracker Demo Screenshots](habitchatsunum.pdf)
 A social habit tracking application built with React Native (Expo) and Django backend.
 
 This is the frontend part of the Habit Tracker project.
